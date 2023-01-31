@@ -33,13 +33,14 @@ async Task ProcessConnection(Socket socket)
 	{
 		var memory = new ArraySegment<byte>(buffer, position, 1024);
 		var count = await socket.ReceiveAsync(memory);
+		Console.WriteLine($"Received {count} bytes");
+		position += count;
 
-		while (count > 4)
+		while (position > 4)
 		{
 			var length = BitConverter.ToInt32(buffer);
-			if (count < 4 + length)
+			if (position < 4 + length)
 			{
-				position = count;
 				break;
 			}
 
@@ -48,8 +49,8 @@ async Task ProcessConnection(Socket socket)
 			Array.Copy(buffer, 4, messageBuffer, 4, length);
 			await socket.SendAsync(messageBuffer);
 
-			Array.Copy(buffer, 4 + length, buffer, 0, position + count);
-			count -= (4 + length);
+			Array.Copy(buffer, 4 + length, buffer, 0, position);
+			position -= 4 + length;
 		}
 	}
 }
