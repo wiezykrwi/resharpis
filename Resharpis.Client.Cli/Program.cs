@@ -1,12 +1,14 @@
 ﻿using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using Resharpis.Common;
 
+await Task.Delay(1_000);
+
+var waitHandle = new AutoResetEvent(false);
 var stopwatch = new Stopwatch();
-var socket = new Socket(SocketType.Stream, ProtocolType.IP);
-await socket.ConnectAsync(IPAddress.Any, 10_000);
+var tcpClient = new TcpClient();
+await tcpClient.ConnectAsync(new IPEndPoint(IPAddress.IPv6Loopback, 10_000));
 
 Task.Run(async () =>
 {
@@ -16,9 +18,15 @@ Task.Run(async () =>
 
 	while (true)
 	{
-		await streamReader.Read(socket);
+		waitHandle.WaitOne();
+		await streamReader.Read(tcpClient.Client);
 		stopwatch.Stop();
 		Console.WriteLine($"Received set result after {stopwatch.Elapsed}");
+
+		if (streamReader.Length == 0)
+		{
+			break;
+		}
 	}
 });
 
@@ -29,25 +37,11 @@ streamWriter.AddSetCommand(new SetCommand
 	Value = "TEST"
 });
 
-stopwatch.Start();
-await streamWriter.Write(socket);
+Console.WriteLine($"Sending set command: {streamWriter.Position} bytes");
 
+stopwatch.Start();
+await streamWriter.Write(tcpClient.Client);
+waitHandle.Set();
 
 Console.ReadKey(true);
 
-int TryRead(int count, byte[] bytes)
-{
-	var size = 0;
-	while (count > 4)
-	{
-		var length = BitConverter.ToInt32(bytes);
-		var result = Encoding.ASCII.GetString(bytes, 4, length);
-		Console.WriteLine($"Received {length} characters: <{result}>");
-
-		Array.Copy(bytes, 4 + length, bytes, 0, count);
-		count -= 4 + length;
-		size += 4 + length;
-	}
-
-	return size;
-}

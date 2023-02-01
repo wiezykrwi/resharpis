@@ -22,33 +22,33 @@ public class ByteStreamWriter
 
     public void AddGetCommand(GetCommand getCommand)
     {
-        Buffer[Position++] = 0x00b;
+        Buffer[Position++] = 0x00;
         AddString(getCommand.Key);
     }
 
     public void AddGetResult(string result)
     {
-        Buffer[Position++] = 0x00b;
+        Buffer[Position++] = 0x00;
         AddString(result);
     }
 
     public void AddEmptyGetResult()
     {
-        Buffer[Position++] = 0x00b;
+        Buffer[Position++] = 0x00;
         BitConverter.TryWriteBytes(new Span<byte>(Buffer, Position, 4), 0);
         Position += 4;
     }
 
     public void AddSetCommand(SetCommand setCommand)
     {
-        Buffer[Position++] = 0x00b;
+        Buffer[Position++] = 0x01;
         AddString(setCommand.Key);
         AddString(setCommand.Value);
     }
 
     public void AddEmptySetResult()
     {
-        Buffer[Position++] = 0x01b;
+        Buffer[Position++] = 0x01;
         BitConverter.TryWriteBytes(new Span<byte>(Buffer, Position, 4), 0);
         Position += 4;
     }
@@ -61,5 +61,6 @@ public class ByteStreamWriter
         BitConverter.TryWriteBytes(new Span<byte>(Buffer, Position, 4), length);
         Position += 4;
         Array.Copy(bytes, 0, Buffer, Position, length);
+        Position += length;
     }
 }

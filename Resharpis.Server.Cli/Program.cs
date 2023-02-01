@@ -9,15 +9,14 @@ var commandReader = new CommandReader();
 Task.Run(async () =>
 {
 	await Task.Yield();
-	
-	using var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-	socket.Bind(new IPEndPoint(IPAddress.Any, 10_000));
-	socket.Listen(100);
-	Console.WriteLine($"Listening for connections on {socket.LocalEndPoint}");
+
+	var tcpListener = new TcpListener(new IPEndPoint(IPAddress.IPv6Loopback, 10_000));
+	tcpListener.Start(100);
+	Console.WriteLine($"Listening for connections on {tcpListener.LocalEndpoint}");
 
 	while (true)
 	{
-		var connection = await socket.AcceptAsync();
+		var connection = await tcpListener.AcceptSocketAsync();
 		Task.Run(() => ProcessConnection(connection));
 	}
 }).ConfigureAwait(false);
@@ -27,7 +26,7 @@ Console.ReadKey(true);
 
 async Task ProcessConnection(Socket remoteSocket)
 {
-	Console.WriteLine($"Accepted incoming connection from {remoteSocket.RemoteEndPoint}");
+	Console.WriteLine($"[{remoteSocket.RemoteEndPoint}] Accepted incoming connection");
 
 	var streamReader = new ByteStreamReader(4 * 1024);
 	var streamWriter = new ByteStreamWriter(4 * 1024);
@@ -35,13 +34,15 @@ async Task ProcessConnection(Socket remoteSocket)
 	while (true)
 	{
 		await streamReader.Read(remoteSocket);
+		Console.WriteLine($"[{remoteSocket.RemoteEndPoint}] Received {streamReader.Length} bytes");
 
-		while (streamReader.Length > 1)
+		while (streamReader.Position > streamReader.Length)
 		{
 			var operation = streamReader.GetByte();
+			Console.WriteLine($"[{remoteSocket.RemoteEndPoint}] Received operation {operation}");
 			switch (operation)
 			{
-				case 0x00:
+				case (byte) 0x00:
 					var getCommand = commandReader.ReadGetCommand(streamReader);
 					if (cache.TryGetValue(getCommand.Key, out var value))
 					{
@@ -54,13 +55,14 @@ async Task ProcessConnection(Socket remoteSocket)
 
 					break;
 				
-				case 0x01:
+				case (byte) 0x01:
 					var setCommand = commandReader.ReadSetCommand(streamReader);
 					cache.AddOrUpdate(setCommand.Key, _ => setCommand.Value, (_, _) => setCommand.Value);
 					streamWriter.AddEmptySetResult();
 					break;
 			}
 			
+			Console.WriteLine($"[{remoteSocket.RemoteEndPoint}] Sending result {streamWriter.Position} bytes");
 			await streamWriter.Write(remoteSocket);
 		}
 	}
