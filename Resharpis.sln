@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Resharpis.Client.Cli", "Resharpis.Client.Cli\Resharpis.Client.Cli.csproj", "{616F265F-DA37-4962-8C44-BB4F2C686C53}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Resharpis.Server.Cli", "Resharpis.Server.Cli\Resharpis.Server.Cli.csproj", "{8F849CA3-5C72-453B-B5B7-1E45AB98722C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Resharpis.Common", "Resharpis.Common\Resharpis.Common.csproj", "{1CD4F1B2-E9FF-4761-8422-E6E83171EB98}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{616F265F-DA37-4962-8C44-BB4F2C686C53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{616F265F-DA37-4962-8C44-BB4F2C686C53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{616F265F-DA37-4962-8C44-BB4F2C686C53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{616F265F-DA37-4962-8C44-BB4F2C686C53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F849CA3-5C72-453B-B5B7-1E45AB98722C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F849CA3-5C72-453B-B5B7-1E45AB98722C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F849CA3-5C72-453B-B5B7-1E45AB98722C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F849CA3-5C72-453B-B5B7-1E45AB98722C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CD4F1B2-E9FF-4761-8422-E6E83171EB98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CD4F1B2-E9FF-4761-8422-E6E83171EB98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CD4F1B2-E9FF-4761-8422-E6E83171EB98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CD4F1B2-E9FF-4761-8422-E6E83171EB98}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

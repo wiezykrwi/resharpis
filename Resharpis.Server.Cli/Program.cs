@@ -1,15 +1,19 @@
-﻿using System.Net;
+﻿using System.Collections.Concurrent;
+using System.Net;
 using System.Net.Sockets;
+using Resharpis.Common;
 
-var cache = new Dictionary<string, string>();
-
-using var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-socket.Bind(new IPEndPoint(IPAddress.Any, 10_000));
-socket.Listen(100);
+var cache = new ConcurrentDictionary<string, string>();
+var commandReader = new CommandReader();
 
 Task.Run(async () =>
 {
 	await Task.Yield();
+	
+	using var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+	socket.Bind(new IPEndPoint(IPAddress.Any, 10_000));
+	socket.Listen(100);
+	Console.WriteLine($"Listening for connections on {socket.LocalEndPoint}");
 
 	while (true)
 	{
@@ -18,39 +22,46 @@ Task.Run(async () =>
 	}
 }).ConfigureAwait(false);
 
-Console.WriteLine($"Listening for connections on {socket.LocalEndPoint}");
 Console.WriteLine($"Press any key to stop...");
 Console.ReadKey(true);
 
-async Task ProcessConnection(Socket socket)
+async Task ProcessConnection(Socket remoteSocket)
 {
-	Console.WriteLine($"Accepted incoming connection from {socket.RemoteEndPoint}");
+	Console.WriteLine($"Accepted incoming connection from {remoteSocket.RemoteEndPoint}");
 
-	var position = 0;
-	var buffer = new byte[4*1024];
+	var streamReader = new ByteStreamReader(4 * 1024);
+	var streamWriter = new ByteStreamWriter(4 * 1024);
 
 	while (true)
 	{
-		var memory = new ArraySegment<byte>(buffer, position, 1024);
-		var count = await socket.ReceiveAsync(memory);
-		Console.WriteLine($"Received {count} bytes");
-		position += count;
+		await streamReader.Read(remoteSocket);
 
-		while (position > 4)
+		while (streamReader.Length > 1)
 		{
-			var length = BitConverter.ToInt32(buffer);
-			if (position < 4 + length)
+			var operation = streamReader.GetByte();
+			switch (operation)
 			{
-				break;
+				case 0x00:
+					var getCommand = commandReader.ReadGetCommand(streamReader);
+					if (cache.TryGetValue(getCommand.Key, out var value))
+					{
+						streamWriter.AddGetResult(value);
+					}
+					else
+					{
+						streamWriter.AddEmptyGetResult();
+					}
+
+					break;
+				
+				case 0x01:
+					var setCommand = commandReader.ReadSetCommand(streamReader);
+					cache.AddOrUpdate(setCommand.Key, _ => setCommand.Value, (_, _) => setCommand.Value);
+					streamWriter.AddEmptySetResult();
+					break;
 			}
-
-			var messageBuffer = new byte[4 + length];
-			BitConverter.TryWriteBytes(messageBuffer, length);
-			Array.Copy(buffer, 4, messageBuffer, 4, length);
-			await socket.SendAsync(messageBuffer);
-
-			Array.Copy(buffer, 4 + length, buffer, 0, position);
-			position -= 4 + length;
+			
+			await streamWriter.Write(remoteSocket);
 		}
 	}
 }
