@@ -15,14 +15,15 @@ public class ByteStreamReader
         Buffer = new byte[bufferSize];
     }
 
-    public async Task Read(Socket socket)
+    public async Task<bool> Read(Socket socket)
     {
         var memory = new ArraySegment<byte>(Buffer, Length, 1024);
         var count = await socket.ReceiveAsync(memory);
         Length += count;
+        return count != 0;
     }
 
-    public object GetByte()
+    public byte GetByte()
     {
         return Buffer[Position++];
     }

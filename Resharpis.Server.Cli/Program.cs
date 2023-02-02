@@ -33,18 +33,22 @@ async Task ProcessConnection(Socket remoteSocket)
 
 	while (true)
 	{
-		await streamReader.Read(remoteSocket);
+		if (!await streamReader.Read(remoteSocket))
+		{
+			Console.WriteLine($"[{remoteSocket.RemoteEndPoint}] Disconnected");
+			return;
+		}
+		
 		Console.WriteLine($"[{remoteSocket.RemoteEndPoint}] Received {streamReader.Length} bytes");
 
-		while (streamReader.Position > streamReader.Length)
+		while (streamReader.Position < streamReader.Length)
 		{
 			var operation = streamReader.GetByte();
-			Console.WriteLine($"[{remoteSocket.RemoteEndPoint}] Received operation {operation}");
 			switch (operation)
 			{
-				case (byte) 0x00:
+				case 0x00:
 					var getCommand = commandReader.ReadGetCommand(streamReader);
-					if (cache.TryGetValue(getCommand.Key, out var value))
+					if (cache.TryGetValue(getCommand.Key.ToUpper(), out var value))
 					{
 						streamWriter.AddGetResult(value);
 					}
@@ -52,12 +56,11 @@ async Task ProcessConnection(Socket remoteSocket)
 					{
 						streamWriter.AddEmptyGetResult();
 					}
-
 					break;
 				
-				case (byte) 0x01:
+				case 0x01:
 					var setCommand = commandReader.ReadSetCommand(streamReader);
-					cache.AddOrUpdate(setCommand.Key, _ => setCommand.Value, (_, _) => setCommand.Value);
+					cache.AddOrUpdate(setCommand.Key.ToUpper(), _ => setCommand.Value, (_, _) => setCommand.Value);
 					streamWriter.AddEmptySetResult();
 					break;
 			}

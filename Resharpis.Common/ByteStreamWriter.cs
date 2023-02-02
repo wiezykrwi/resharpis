@@ -5,7 +5,7 @@ namespace Resharpis.Common;
 
 public class ByteStreamWriter
 {
-    public byte[] Buffer { get; }
+    private byte[] Buffer { get; }
 
     public int Position { get; private set; }
 
@@ -16,8 +16,8 @@ public class ByteStreamWriter
 
     public async Task Write(Socket socket)
     {
-        await socket.SendAsync(new ArraySegment<byte>(Buffer, 0, Position));
-        Position = 0;
+        var count = await socket.SendAsync(new ArraySegment<byte>(Buffer, 0, Position));
+        Position -= count;
     }
 
     public void AddGetCommand(GetCommand getCommand)
